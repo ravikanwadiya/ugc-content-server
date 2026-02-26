@@ -249,8 +249,8 @@ export const createVideo = async (req:Request, res: Response) => {
         }
 
         const videoFile = operation.response.generatedVideos[0].video;
-        const videoUri = `${videoFile.uri}&key=${process.env.GEMINI_API_KEY}`;
-		console.log(videoUri);
+        const videoUri = `${videoFile.uri}&key=${process.env.GOOGLE_CLOUD_API_KEY}`;
+
         const uploadResult = await cloudinary.uploader.upload(videoUri, {
             resource_type: "video",
         });
