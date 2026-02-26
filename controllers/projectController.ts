@@ -250,33 +250,34 @@ export const createVideo = async (req:Request, res: Response) => {
         }
 
         const videoFile = operation.response.generatedVideos[0].video;
-        const videoUri = `${videoFile.uri}&key=${process.env.GEMINI_API_KEY}`;
-        const videoResponse = await axios.get(videoUri, {
-					responseType: "arraybuffer",
-				});
+		console.log(videoFile);
+    //     const videoUri = `${videoFile.uri}&key=${process.env.GEMINI_API_KEY}`;
+    //     const videoResponse = await axios.get(videoUri, {
+				// 	responseType: "arraybuffer",
+				// });
 
-        const videoBuffer = Buffer.from(videoResponse.data);
-        const uploadResult: any = await new Promise((resolve, reject) => {
-					const stream = cloudinary.uploader.upload_stream(
-						{
-							resource_type: "video",
-						},
-						(error, result) => {
-							if (error) reject(error);
-							else resolve(result);
-						},
-					);
+    //     const videoBuffer = Buffer.from(videoResponse.data);
+    //     const uploadResult: any = await new Promise((resolve, reject) => {
+				// 	const stream = cloudinary.uploader.upload_stream(
+				// 		{
+				// 			resource_type: "video",
+				// 		},
+				// 		(error, result) => {
+				// 			if (error) reject(error);
+				// 			else resolve(result);
+				// 		},
+				// 	);
 
-					streamifier.createReadStream(videoBuffer).pipe(stream);
-				});
+				// 	streamifier.createReadStream(videoBuffer).pipe(stream);
+				// });
 
-        await prisma.project.update({
-            where: {id: project.id},
-            data: {
-                generatedVideo: uploadResult.secure_url,
-                isGenerating: false
-            }
-        })
+    //     await prisma.project.update({
+    //         where: {id: project.id},
+    //         data: {
+    //             generatedVideo: uploadResult.secure_url,
+    //             isGenerating: false
+    //         }
+    //     })
 
         res.json({message: 'Video generation completed', videoUrl: uploadResult.secure_url})
         
@@ -338,3 +339,4 @@ export const deleteProject = async (req:Request, res: Response) => {
         res.status(500).json({ message: error.message });
     }
 }
+
