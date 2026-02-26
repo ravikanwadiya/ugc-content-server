@@ -250,7 +250,8 @@ export const createVideo = async (req:Request, res: Response) => {
         }
 
         const videoFile = operation.response.generatedVideos[0].video;
-        const videoResponse = await axios.get(videoFile.uri, {
+        const videoUri = `${videoFile.uri}&key=${process.env.GEMINI_API_KEY}`;
+        const videoResponse = await axios.get(videoUri, {
 					responseType: "arraybuffer",
 				});
 
