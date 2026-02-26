@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import ai from '../configs/ai.js';
 import axios from 'axios';
+import streamifier from "streamifier";
 
 const loadImage = (path: string, mimeType: string)=>{
     return {
@@ -248,23 +249,25 @@ export const createVideo = async (req:Request, res: Response) => {
             })
         }
 
-        const filename = `${userId}-${Date.now()}.mp4`;
-        const filePath = path.join('videos', filename)
+        const videoFile = operation.response.generatedVideos[0].video;
+        const videoResponse = await axios.get(videoFile.uri, {
+					responseType: "arraybuffer",
+				});
 
-        // Create the images directory if it doesn't exist
-        fs.mkdirSync('videos', {recursive: true})
+        const videoBuffer = Buffer.from(videoResponse.data);
+        const uploadResult: any = await new Promise((resolve, reject) => {
+					const stream = cloudinary.uploader.upload_stream(
+						{
+							resource_type: "video",
+						},
+						(error, result) => {
+							if (error) reject(error);
+							else resolve(result);
+						},
+					);
 
-        if(!operation.response.generatedVideos){
-            throw new Error(operation.response.raiMediaFilteredReasons[0])
-        }
-
-        // Download the video.
-        await ai.files.download({
-            file: operation.response.generatedVideos[0].video,
-            downloadPath: filePath,
-        })
-
-        const uploadResult = await cloudinary.uploader.upload(filePath, { resource_type: 'video' });
+					streamifier.createReadStream(videoBuffer).pipe(stream);
+				});
 
         await prisma.project.update({
             where: {id: project.id},
@@ -273,9 +276,6 @@ export const createVideo = async (req:Request, res: Response) => {
                 isGenerating: false
             }
         })
-
-        // remove video file from disk after upload
-        fs.unlinkSync(filePath);
 
         res.json({message: 'Video generation completed', videoUrl: uploadResult.secure_url})
         
